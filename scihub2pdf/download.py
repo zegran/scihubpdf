@@ -4,6 +4,7 @@ from builtins import input
 import bibtexparser
 # from . import __version__
 # from lxml.etree import ParserError
+import os
 import re
 from title2bib.crossref import get_bib_from_title
 from scihub2pdf.scihub import SciHub
@@ -39,7 +40,11 @@ xpath_captcha = "//*[@id='captcha']"
 xpath_pdf = "//*[@id='pdf']"
 xpath_input = "/html/body/div/table/tbody/tr/td/form/input"
 xpath_form = "/html/body/div/table/tbody/tr/td/form"
-domain_scihub = "http://sci-hub.cc/"
+# Sci-Hub rotates domains. SCIHUB_MIRROR may hold a single mirror or a
+# comma-separated list to override the built-in order; otherwise SciHub falls
+# back to its DEFAULT_MIRRORS list (sci-hub.st, .ist, .ru, .se).
+_env_mirror = os.environ.get("SCIHUB_MIRROR", "")
+domain_scihub = [m for m in _env_mirror.split(",")] if _env_mirror else None
 
 ScrapSci = SciHub(headers,
                   xpath_captcha,
@@ -96,22 +101,16 @@ def download_from_arxiv(value, location, field="id"):
 
 
 def download_from_scihub(doi, pdf_file):
+    # navigate_to() walks the reachable mirrors and stops at the first one that
+    # actually serves the PDF, so a successful return means a PDF was located.
     found, r = ScrapSci.navigate_to(doi, pdf_file)
     if not found:
+        print("\tNo PDF found on any mirror. The article may be unavailable,")
+        print("\tor a captcha must be solved in a real browser.")
         return False, r
 
-    has_captcha, has_iframe = ScrapSci.check_captcha()
-    while (has_captcha and has_iframe):
-        captcha_img = ScrapSci.get_captcha_img()
-        captcha_img.show()
-        captcha_text = input("\tPut captcha:\n\t")
-        has_captcha, has_iframe = ScrapSci.solve_captcha(captcha_text)
-
-    if has_iframe:
-        found, r = ScrapSci.download()
-
-    found = has_iframe
-    return has_iframe, r
+    found, r = ScrapSci.download()
+    return found, r
 
 
 def download_pdf_from_bibs(bibs, location="",
