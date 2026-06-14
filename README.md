@@ -74,6 +74,23 @@ Use Libgen instead of Sci-Hub:
 scihub2pdf -i input.bib --uselibgen
 ```
 
+## Output location
+
+By default each run writes its PDFs into a **timestamped subfolder** so
+downloads from different sessions stay separated:
+
+```
+<base>/2026-06-14_18-37-04/10.1016_j.cell.2017.05.016.pdf
+```
+
+`<base>` is the `-l` value (or the current directory when `-l` is omitted).
+The folder name is `YYYY-MM-DD_HH-MM-SS`. To write straight into the base
+folder instead (the legacy behaviour), pass `--no-session-dir`:
+
+```bash
+scihub2pdf 10.1016/j.cell.2017.05.016 -l papers/ --no-session-dir
+```
+
 ## Sci-Hub mirrors
 
 The Sci-Hub backend tries these mirrors in order, skips any that are

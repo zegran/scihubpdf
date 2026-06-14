@@ -6,11 +6,13 @@ importable module so a ``console_scripts`` entry point can generate a proper
 ``scihub2pdf`` executable (including ``scihub2pdf.exe`` on Windows).
 """
 from __future__ import unicode_literals, print_function, absolute_import
+import os
 import sys
 import re
 import io
 import textwrap
 import argparse
+from datetime import datetime
 
 import bibtexparser
 from unidecode import unidecode  # noqa: F401  (kept for parity with original script)
@@ -21,6 +23,25 @@ from scihub2pdf.download import (download_from_doi,
                                  download_pdf_from_bibs)
 
 pyversion = sys.version_info[0]
+
+
+def make_session_location(base, no_session_dir=False):
+    """Return the download-location prefix for this run.
+
+    By default every run gets its own timestamped subfolder under ``base``
+    (the current directory when ``base`` is empty), so PDFs from different
+    sessions stay separated. The returned value ends with a path separator so
+    it can be concatenated with a file name. Pass ``no_session_dir=True`` to
+    write straight into ``base`` (the legacy behaviour).
+    """
+    base = base or ""
+    if no_session_dir:
+        return base
+    session = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+    location = os.path.join(base if base else ".", session) + os.sep
+    os.makedirs(location, exist_ok=True)
+    print("\tSaving PDFs to:", location)
+    return location
 
 
 def main():
@@ -58,13 +79,17 @@ def main():
                         help="download from title")
     parser.add_argument("--uselibgen", dest="uselibgen", action="store_true",
                         help="Use libgen.io instead sci-hub.")
-    parser.add_argument("--location", "-l", help="folder, ex: -l 'folder/'")
+    parser.add_argument("--location", "-l", help="base folder, ex: -l 'folder/'")
     parser.add_argument("--txt", action="store_true",
                         help="Just create a file with DOI's or titles")
+    parser.add_argument("--no-session-dir", dest="no_session_dir",
+                        action="store_true",
+                        help="Do not create a per-run timestamped subfolder")
 
     parser.set_defaults(title=False)
     parser.set_defaults(uselibgen=False)
     parser.set_defaults(txt=False)
+    parser.set_defaults(no_session_dir=False)
     parser.set_defaults(location="")
 
     args = parser.parse_known_args()
@@ -72,7 +97,7 @@ def main():
     is_txt = args[0].txt
     use_libgen = args[0].uselibgen
     inline_search = len(args[1]) > 0
-    location = args[0].location
+    location = make_session_location(args[0].location, args[0].no_session_dir)
 
     if use_libgen:
         start_libgen()
