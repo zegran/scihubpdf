@@ -1,113 +1,146 @@
-# SciHub to PDF(Beta)
+# SciHub to PDF
 
-![](https://raw.githubusercontent.com/bibcure/logo/master/gifs/scihub.gif) 
-## Description
+Downloads PDFs by DOI, article title, arXiv id, or a BibTeX file, using
+**Sci-Hub**, **Libgen**, and **arXiv**.
 
-scihub2pdf is a module of [bibcure](https://github.com/bibcure/bibcure)
+> Modernized fork of [bibcure/scihub2pdf](https://github.com/bibcure/scihub2pdf),
+> updated to run on a current Python / Selenium stack:
+>
+> - The Sci-Hub backend now drives **headless Google Chrome via Selenium 4**.
+>   The original `PhantomJS` backend no longer works (PhantomJS was removed
+>   from Selenium 4).
+> - **Multiple Sci-Hub mirrors** are tried in order, skipping unreachable ones.
+> - Installs cleanly on Windows with a real `scihub2pdf` command.
 
-Downloads pdfs via a DOI number, article title or a bibtex file, using the
-database of libgen,  Sci-Hub and Arxiv.
+## Requirements
+
+- Python 3.8+
+- Google Chrome — only for the Sci-Hub backend. Selenium Manager downloads a
+  matching driver automatically, so you do **not** need PhantomJS or a manual
+  `chromedriver`.
 
 ## Install
 
-```
-$ sudo python /usr/bin/pip install scihub2pdf
-```
-If you want  to download files from scihub you will need to get  PhantomJS
+Using [uv](https://docs.astral.sh/uv/) (recommended):
 
-### OSX
-```
-$ npm install -g phantomjs
-```
-### Linux Using npm
-
-```
-$ sudo apt-get install npm
-$ sudo npm install -g phantomjs
+```bash
+git clone https://github.com/zegran/scihubpdf.git
+cd scihubpdf
+uv venv
+uv pip install -e .
 ```
 
+Or with pip:
 
-
-## Features and how to use
-
-Given a bibtex file
-```
-$ scihub2pdf -i input.bib
-```
-
-Given a DOI number...
-```
-$ scihub2pdf 10.1038/s41524-017-0032-0
+```bash
+git clone https://github.com/zegran/scihubpdf.git
+cd scihubpdf
+pip install -e .
 ```
 
-Given a title...
-```
-$ scihub2pdf --title An useful paper
-```
+## Usage
 
-Arxiv...
-```
-$ scihub2pdf arxiv:0901.2686
-$ scihub2pdf --title arxiv:Periodic table for topological insulators
-```
+Inside an activated virtualenv use `scihub2pdf ...`; with uv you can also run
+`uv run scihub2pdf ...`.
 
-Location folder as argument
-```
-$ scihub2pdf -i input.bib -l somefoler/
+Given a BibTeX file:
+```bash
+scihub2pdf -i input.bib
 ```
 
-Use libgen instead sci-hub
-
+Given a DOI:
+```bash
+scihub2pdf 10.1038/s41524-017-0032-0
 ```
-$ scihub2pdf -i input.bib --uselibgen
+
+Given a title:
+```bash
+scihub2pdf --title An useful paper
 ```
 
-## Sci-hub:
+arXiv:
+```bash
+scihub2pdf arxiv:0901.2686
+scihub2pdf --title arxiv:Periodic table for topological insulators
+```
 
-- Stable
-- Annoying CAPTCHA
-- Fast
+Output folder (note: `-l` is a folder **prefix**, not a file path):
+```bash
+scihub2pdf -i input.bib -l somefolder/
+```
 
+Use Libgen instead of Sci-Hub:
+```bash
+scihub2pdf -i input.bib --uselibgen
+```
 
-## Libgen
+## Sci-Hub mirrors
 
-- Unstalbe
-- No CAPTCHA
-- Slow
+The Sci-Hub backend tries these mirrors in order, skips any that are
+unreachable, and stops at the first one that actually serves the PDF:
 
-## Download from list of items
+`sci-hub.st` → `sci-hub.ist` → `sci-hub.ru` → `sci-hub.se`
 
-Given a text file like
+Override the list (a single mirror or a comma-separated list) with the
+`SCIHUB_MIRROR` environment variable:
 
+```powershell
+# Windows PowerShell
+$env:SCIHUB_MIRROR="https://sci-hub.ist/,https://sci-hub.st/"
+scihub2pdf 10.1016/j.cell.2017.05.016 -l papers/
+```
+
+```bash
+# Linux / macOS
+SCIHUB_MIRROR="https://sci-hub.ist/" scihub2pdf 10.1016/j.cell.2017.05.016 -l papers/
+```
+
+## Download from a list of items
+
+DOIs (`dois.txt`):
 ```
 10.1038/s41524-017-0032-0
 10.1063/1.3149495
-.....
 ```
-download all pdf's
+```bash
+scihub2pdf -i dois.txt --txt
 ```
-$ scihub2pdf -i dois.txt --txt
-```
-Given a text file like
 
+Titles (`titles.txt`):
 ```
 Some Title 1
 Some Title 2
-.....
 ```
-download all pdf's
+```bash
+scihub2pdf -i titles.txt --txt --title
 ```
-$ scihub2pdf -i titles.txt --txt --title
-```
-Given a text file like
 
+arXiv ids (`arxiv_ids.txt`):
 ```
 arXiv:1708.06891
 arXiv:1708.06071
-arXiv:1708.05948
-.....
 ```
-download all pdf's
+```bash
+scihub2pdf -i arxiv_ids.txt --txt
 ```
-$ scihub2pdf -i arxiv_ids.txt --txt
+
+## Backend comparison
+
+| Backend | Browser needed   | Notes                                          |
+|---------|------------------|------------------------------------------------|
+| Sci-Hub | Headless Chrome  | Tries multiple mirrors; best coverage          |
+| Libgen  | No               | `--uselibgen`; depends on Libgen availability   |
+| arXiv   | No               | Open access; always works for arXiv ids        |
+
+## Windows note
+
+If printing a non-ASCII title/DOI triggers a `cp1252` encoding error, set
+UTF-8 output first:
+
+```powershell
+$env:PYTHONIOENCODING="utf-8"
 ```
+
+## License
+
+AGPLv3, inherited from the upstream project. See [LICENSE](LICENSE).

@@ -1,136 +1,114 @@
-SciHub to PDF(Beta)
-===================
+SciHub to PDF
+=============
 
-Description
------------
+Downloads PDFs by DOI, article title, arXiv id, or a BibTeX file, using
+Sci-Hub, Libgen, and arXiv.
 
-scihub2pdf is a module of
-`bibcure <https://github.com/bibcure/bibcure>`__
+Modernized fork of `bibcure/scihub2pdf
+<https://github.com/bibcure/scihub2pdf>`__, updated to run on a current
+Python / Selenium stack:
 
-Downloads pdfs via a DOI number, article title or a bibtex file, using
-the database of libgen, Sci-Hub and Arxiv.
+- The Sci-Hub backend now drives headless Google Chrome via Selenium 4. The
+  original PhantomJS backend no longer works (PhantomJS was removed from
+  Selenium 4).
+- Multiple Sci-Hub mirrors are tried in order, skipping unreachable ones.
+- Installs cleanly on Windows with a real ``scihub2pdf`` command.
+
+Requirements
+------------
+
+- Python 3.8+
+- Google Chrome (only for the Sci-Hub backend; Selenium Manager downloads a
+  matching driver automatically).
 
 Install
 -------
 
-::
+Using uv (recommended)::
 
-    $ sudo python /usr/bin/pip install scihub2pdf
+    git clone https://github.com/zegran/scihubpdf.git
+    cd scihubpdf
+    uv venv
+    uv pip install -e .
 
-If you want to download files from scihub you will need to get PhantomJS
+Or with pip::
 
-OSX
-~~~
-
-::
-
-    $ npm install -g phantomjs
-
-Linux Using npm
-~~~~~~~~~~~~~~~
-
-::
-
-    $ sudo apt-get install npm
-    $ sudo npm install -g phantomjs
+    git clone https://github.com/zegran/scihubpdf.git
+    cd scihubpdf
+    pip install -e .
 
 Features and how to use
 -----------------------
 
-Given a bibtex file
-
-::
+Given a bibtex file::
 
     $ scihub2pdf -i input.bib
 
-Given a DOI number...
-
-::
+Given a DOI number::
 
     $ scihub2pdf 10.1038/s41524-017-0032-0
 
-Given a title...
-
-::
+Given a title::
 
     $ scihub2pdf --title An useful paper
 
-Arxiv...
-
-::
+Arxiv::
 
     $ scihub2pdf arxiv:0901.2686
     $ scihub2pdf --title arxiv:Periodic table for topological insulators
 
-Location folder as argument
+Location folder as argument (``-l`` is a folder prefix, not a file path)::
 
-::
+    $ scihub2pdf -i input.bib -l somefolder/
 
-    $ scihub2pdf -i input.bib -l somefoler/
-
-Use libgen instead sci-hub
-
-::
+Use libgen instead sci-hub::
 
     $ scihub2pdf -i input.bib --uselibgen
 
-Sci-hub:
---------
+Sci-Hub mirrors
+---------------
 
--  Stable
--  Annoying CAPTCHA
--  Fast
+The Sci-Hub backend tries these mirrors in order, skips unreachable ones, and
+stops at the first that serves the PDF::
 
-Libgen
-------
+    sci-hub.st -> sci-hub.ist -> sci-hub.ru -> sci-hub.se
 
--  Unstalbe
--  No CAPTCHA
--  Slow
+Override with the SCIHUB_MIRROR environment variable (single mirror or a
+comma-separated list)::
+
+    SCIHUB_MIRROR="https://sci-hub.ist/" scihub2pdf 10.1016/j.cell.2017.05.016 -l papers/
 
 Download from list of items
 ---------------------------
 
-Given a text file like
-
-::
+Given a text file of DOIs::
 
     10.1038/s41524-017-0032-0
     10.1063/1.3149495
-    .....
 
-download all pdf's
-
-::
+download all pdf's::
 
     $ scihub2pdf -i dois.txt --txt
 
-Given a text file like
-
-::
+Given a text file of titles::
 
     Some Title 1
     Some Title 2
-    .....
 
-download all pdf's
-
-::
+download all pdf's::
 
     $ scihub2pdf -i titles.txt --txt --title
 
-Given a text file like
-
-::
+Given a text file of arXiv ids::
 
     arXiv:1708.06891
     arXiv:1708.06071
-    arXiv:1708.05948
-    .....
 
-download all pdf's
-
-::
+download all pdf's::
 
     $ scihub2pdf -i arxiv_ids.txt --txt
 
+License
+-------
+
+AGPLv3, inherited from the upstream project.
