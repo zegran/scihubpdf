@@ -8,7 +8,6 @@ setup(
     name="scihub2pdf",
     version="0.4.2",
     packages=find_packages(exclude=["build", ]),
-    scripts=["scihub2pdf/bin/scihub2pdf"],
     entry_points={
         "console_scripts": [
             "scihub2pdf = scihub2pdf.cli:main",
