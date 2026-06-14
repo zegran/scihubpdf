@@ -9,6 +9,11 @@ setup(
     version="0.4.2",
     packages=find_packages(exclude=["build", ]),
     scripts=["scihub2pdf/bin/scihub2pdf"],
+    entry_points={
+        "console_scripts": [
+            "scihub2pdf = scihub2pdf.cli:main",
+        ],
+    },
     long_description=README_TEXT,
     install_requires=["bibtexparser",
                       "title2bib",
@@ -18,7 +23,8 @@ setup(
                       "Pillow",
                       "requests",
                       "selenium",
-                      "lxml"],
+                      "lxml",
+                      "unidecode"],
     include_package_data=True,
     license="AGPLv3",
     description="Downloads pdfs via a DOI number(or arxivId), article title or a bibtex file, sci-hub",
