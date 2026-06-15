@@ -155,6 +155,7 @@ def fetch_one(citekey: str, doi: str, outdir: str, email: str, ua: str,
     s2 = semantic_scholar(doi)
     candidates = list(dict.fromkeys(urls + ([s2] if s2 else [])))
 
+    method = "none"
     if candidates and http_download(candidates, dest, ua) and verify_pdf(dest):
         method = "open-access"
     elif scihub is not None:
@@ -163,17 +164,23 @@ def fetch_one(citekey: str, doi: str, outdir: str, email: str, ua: str,
             if os.path.abspath(produced) != os.path.abspath(dest):
                 os.replace(produced, dest)
             method = "sci-hub"
-        else:
-            method = "oa-link" if candidates else "paywalled"
-    else:
-        method = "oa-link" if candidates else "paywalled"
 
-    size = os.path.getsize(dest) if verify_pdf(dest) else 0
-    if size == 0 and method in ("open-access", "sci-hub"):
-        method = "oa-link" if candidates else "paywalled"
+    if verify_pdf(dest):
+        return {"citekey": citekey, "doi": doi, "method": method,
+                "oa_status": oa_status, "bytes": os.path.getsize(dest), "oa_link": ""}
+
+    # Not downloaded: classify the gap honestly and hand back a usable link.
+    # A gold/green/hybrid/bronze item with no fetchable URL is still open access
+    # (often Cloudflare/bot-blocked) -> point at the DOI landing, do NOT call it paywalled.
+    is_oa = (oa_status or "").lower() in ("gold", "green", "hybrid", "bronze")
+    if candidates:
+        method, link = "oa-link", candidates[0]
+    elif is_oa:
+        method, link = "oa-link", "https://doi.org/" + doi
+    else:
+        method, link = "paywalled", ""
     return {"citekey": citekey, "doi": doi, "method": method,
-            "oa_status": oa_status, "bytes": size,
-            "oa_link": candidates[0] if candidates else ""}
+            "oa_status": oa_status, "bytes": 0, "oa_link": link}
 
 
 def main() -> None:
